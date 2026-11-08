@@ -1,10 +1,33 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+
+/* put spaces around operators so "a+b" becomes " a + b " */
+void fix(char *s)
+{
+    char t[150];
+    int i, j = 0;
+    for (i = 0; s[i]; i++)
+    {
+        if (strchr("+-*/", s[i]))
+            j += sprintf(t + j, " %c ", s[i]);
+        else if (s[i] != '\0' && strchr("<>=!", s[i]))
+        {
+            if (i == 0 || !strchr("<>=!", s[i - 1])) t[j++] = ' ';
+            t[j++] = s[i];
+            if (!strchr("<>=!", s[i + 1])) t[j++] = ' ';
+        }
+        else t[j++] = s[i];
+    }
+    t[j] = 0;
+    strcpy(s, t);
+}
 
 int main()
 {
-    int n, i;
-    char s[20][50], d[10], a[10], b[10], op, c[10], l[10];
+    int n, i, j, nv = 0;
+    char s[20][150], d[10], a[10], b[10], op, c[10], l[10];
+    char v[30][10], tmp[150], *t, *p;
 
     printf("Enter number of statements: ");
     scanf("%d", &n);
@@ -12,9 +35,29 @@ int main()
 
     printf("Enter three address code:\n");
     for (i = 0; i < n; i++)
+    {
         fgets(s[i], 50, stdin);
+        fix(s[i]);
+    }
 
-    printf("\n8086 Assembly Code:\n");
+    /* collect variables (skip numbers, labels, if, goto) */
+    for (i = 0; i < n; i++)
+    {
+        if (strchr(s[i], ':')) continue;
+        strcpy(tmp, s[i]);
+        for (p = "", t = strtok(tmp, " \n"); t; p = t, t = strtok(0, " \n"))
+            if (isalpha(t[0]) && strcmp(t, "if") && strcmp(t, "goto") && strcmp(p, "goto"))
+            {
+                for (j = 0; j < nv && strcmp(v[j], t); j++);
+                if (j == nv) strcpy(v[nv++], t);
+            }
+    }
+
+    printf("\n8086 Assembly Code:\nDATA SEGMENT\n");
+    for (i = 0; i < nv; i++)
+        printf("\t%s DW ?\n", v[i]);
+    printf("DATA ENDS\nCODE SEGMENT\n\tASSUME CS:CODE, DS:DATA\n");
+    printf("START:\tMOV AX, DATA\n\tMOV DS, AX\n");
 
     for (i = 0; i < n; i++)
     {
@@ -27,6 +70,8 @@ int main()
 
             if (!strcmp(c, "<")) printf("JL %s\n", l);
             else if (!strcmp(c, ">")) printf("JG %s\n", l);
+            else if (!strcmp(c, "<=")) printf("JLE %s\n", l);
+            else if (!strcmp(c, ">=")) printf("JGE %s\n", l);
             else if (!strcmp(c, "==")) printf("JE %s\n", l);
             else if (!strcmp(c, "!=")) printf("JNE %s\n", l);
         }
@@ -50,5 +95,6 @@ int main()
             printf("MOV AX, %s\nMOV %s, AX\n", a, d);
     }
 
+    printf("MOV AH, 4CH\nINT 21H\nCODE ENDS\nEND START\n");
     return 0;
 }
