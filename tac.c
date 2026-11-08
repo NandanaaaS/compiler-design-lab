@@ -1,4 +1,4 @@
-
+//INPUT WORKS ANYWAY, a=b+c, a = b + c ELLAM OK
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
