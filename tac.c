@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -21,6 +22,7 @@ void generate()
 
     sprintf(r, "t%d", temp++);
     printf("%s = %s %c %s\n", r, a, c, b);
+
     strcpy(val[++vtop], r);
 }
 
@@ -30,60 +32,90 @@ int main()
     int i = 0, j = 0;
 
     printf("Enter expression: ");
-    scanf("%99s", s);
+    fgets(s, sizeof(s), stdin);
+    s[strcspn(s, "\n")] = '\0';
 
-    while (s[i] && s[i] != '=') lhs[j++] = s[i++];
+    while (s[i] && s[i] != '=')
+        lhs[j++] = s[i++];
+
     lhs[j] = '\0';
+
     if (s[i] == '=') i++;
 
     printf("\nThree Address Code:\n");
 
-    while (s[i]) {
-        if (isalnum((unsigned char)s[i]) || s[i] == '_') {
+    while (s[i])
+    {
+        if (isspace((unsigned char)s[i]))
+        {
+            i++;
+            continue;
+        }
+
+        if (isalnum((unsigned char)s[i]) || s[i] == '_')
+        {
             j = 0;
             vtop++;
+
             while (isalnum((unsigned char)s[i]) || s[i] == '_')
                 val[vtop][j++] = s[i++];
+
             val[vtop][j] = '\0';
         }
         else if (s[i] == '(')
+        {
             op[++top] = s[i++];
-        else if (s[i] == ')') {
-            while (top != -1 && op[top] != '(') generate();
-            if (top == -1) {
+        }
+        else if (s[i] == ')')
+        {
+            while (top != -1 && op[top] != '(')
+                generate();
+
+            if (top == -1)
+            {
                 printf("Invalid expression\n");
                 return 1;
             }
+
             top--;
             i++;
         }
-        else if (strchr("+-*/", s[i])) {
+        else if (strchr("+-*/", s[i]))
+        {
             while (top != -1 && op[top] != '(' &&
                    prec(op[top]) >= prec(s[i]))
                 generate();
+
             op[++top] = s[i++];
         }
-        else {
+        else
+        {
             printf("Invalid character\n");
             return 1;
         }
     }
 
-    while (top != -1) {
-        if (op[top] == '(') {
+    while (top != -1)
+    {
+        if (op[top] == '(')
+        {
             printf("Invalid expression\n");
             return 1;
         }
+
         generate();
     }
 
-    if (vtop != 0) {
+    if (vtop != 0)
+    {
         printf("Invalid expression\n");
         return 1;
     }
 
-    if (*lhs) printf("%s = %s\n", lhs, val[vtop]);
-    else printf("Result = %s\n", val[vtop]);
+    if (*lhs)
+        printf("%s = %s\n", lhs, val[vtop]);
+    else
+        printf("Result = %s\n", val[vtop]);
 
     return 0;
 }
