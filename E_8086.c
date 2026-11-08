@@ -1,3 +1,4 @@
+//input like a = b + c, PUT SPACE IN BETWEEN, NOT a=b+c
 #include <stdio.h>
 #include <string.h>
 
