@@ -1,0 +1,141 @@
+//INPUT WORKS WITH AND WITHOUT SPACE
+
+%{
+#include "y.tab.h"
+#include <string.h>
+%}
+
+%%
+[a-zA-Z][a-zA-Z0-9]* {
+    strcpy(yylval.str, yytext);
+    return ID;
+}
+[0-9]+ {
+    strcpy(yylval.str, yytext);
+    return ID;
+}
+[+*()]      { return yytext[0]; }
+\n          { return '\n'; }
+[ \t]       ;
+.           { return yytext[0]; }
+%%
+
+int yywrap()
+{
+    return 1;
+}
+
+
+-----
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct node
+{
+    char data[20];
+    struct node *left, *right;
+};
+
+struct node *newnode(char *x, struct node *l, struct node *r)
+{
+    struct node *p = malloc(sizeof(struct node));
+    strcpy(p->data, x);
+    p->left = l;
+    p->right = r;
+    return p;
+}
+
+void preorder(struct node *p)
+{
+    if (p)
+    {
+        printf("%s ", p->data);
+        preorder(p->left);
+        preorder(p->right);
+    }
+}
+
+void postorder(struct node *p)
+{
+    if (p)
+    {
+        postorder(p->left);
+        postorder(p->right);
+        printf("%s ", p->data);
+    }
+}
+
+void printAST(struct node *p, int level)
+{
+    int i;
+    if (p == NULL) return;
+
+    for (i = 0; i < level; i++)
+        printf("    ");
+
+    printf("|-- %s\n", p->data);
+
+    printAST(p->left, level + 1);
+    printAST(p->right, level + 1);
+}
+%}
+
+%union {
+    char str[20];
+    struct node *ptr;
+}
+
+%token <str> ID
+%type <ptr> E T F
+
+%left '+'
+%left '*'
+
+%%
+S : E '\n'
+    {
+        printf("\nAST:\n");
+        printAST($1, 0);
+
+        printf("\nPreorder: ");
+        preorder($1);
+
+        printf("\nPostorder: ");
+        postorder($1);
+        printf("\n");
+
+        return 0;
+    }
+  ;
+
+E : E '+' T { $$ = newnode("+", $1, $3); }
+  | T       { $$ = $1; }
+  ;
+
+T : T '*' F { $$ = newnode("*", $1, $3); }
+  | F       { $$ = $1; }
+  ;
+
+F : '(' E ')' { $$ = $2; }
+  | ID        { $$ = newnode($1, NULL, NULL); }
+  ;
+%%
+
+int main()
+{
+    printf("Enter expression: ");
+    yyparse();
+    return 0;
+}
+
+int yyerror()
+{
+    printf("Invalid expression\n");
+    return 0;
+}
+
+
+
