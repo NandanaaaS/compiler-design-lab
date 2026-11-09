@@ -1,4 +1,4 @@
-
+//uSE # FOR Epsilon, INPUT PRODUCTIONS LIKE S=AB, A=aB (Use = to separate LHS nd RHS)
 #include <stdio.h>
 #include <ctype.h>
 
