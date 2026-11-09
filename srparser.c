@@ -7,18 +7,14 @@ int top = -1, ip = 0, len;
 
 int prec(char op)
 {
-    if (op == '+' || op == '-')
-        return 1;
-    if (op == '*' || op == '/')
-        return 2;
+    if (op == '+' || op == '-') return 1;
+    if (op == '*' || op == '/') return 2;
     return 0;
 }
-
 
 void display(char action[])
 {
     int i;
-
     printf("$");
     for (i = 0; i <= top; i++)
         printf("%c", stack[i]);
@@ -31,11 +27,11 @@ void display(char action[])
     printf("$\t\t%s\n", action);
 }
 
-
 int reduce()
 {
     char next = (ip < len) ? input[ip] : '$';
 
+    // Rule 1: E -> i
     if (top >= 0 && stack[top] == 'i')
     {
         stack[top] = 'E';
@@ -43,8 +39,8 @@ int reduce()
         return 1;
     }
 
-    if (top >= 2 && stack[top-2] == '(' &&
-        stack[top-1] == 'E' && stack[top] == ')')
+    // Rule 2: E -> (E)
+    if (top >= 2 && stack[top-2] == '(' && stack[top-1] == 'E' && stack[top] == ')')
     {
         top -= 2;
         stack[top] = 'E';
@@ -52,12 +48,12 @@ int reduce()
         return 1;
     }
 
-    if (top >= 2 && stack[top-2] == 'E' &&
-        strchr("+-*/", stack[top-1]) && stack[top] == 'E')
+    // Rule 3: E -> E op E
+    if (top >= 2 && stack[top-2] == 'E' && strchr("+-*/", stack[top-1]) && stack[top] == 'E')
     {
-        if (next == '$' || next == ')' ||
-            (strchr("+-*/", next) &&
-             prec(stack[top-1]) >= prec(next)))
+        // FIX: Only reduce if next token is an operator with lower/equal precedence, or an end-marker
+        if (next == '$' || next == ')' || 
+            (strchr("+-*/", next) && prec(stack[top-1]) >= prec(next)))
         {
             top -= 2;
             stack[top] = 'E';
@@ -71,15 +67,34 @@ int reduce()
 
 int main()
 {
-    int i, j = 0;
+    int i = 0, j = 0;
 
     printf("Enter input string: ");
     if (!fgets(input, sizeof(input), stdin))
         return 0;
 
-    for (i = 0; input[i]; i++)
-        if (!isspace((unsigned char)input[i]))
-            input[j++] = input[i];
+    // FIX: Safely convert names/numbers to 'i' without double-incrementing index loops
+    while (input[i])
+    {
+        if (isspace((unsigned char)input[i]))
+        {
+            i++;
+            continue;
+        }
+
+        if (isalnum((unsigned char)input[i]) || input[i] == '_')
+        {
+            while (isalnum((unsigned char)input[i]) || input[i] == '_')
+            {
+                i++;
+            }
+            input[j++] = 'i';
+        }
+        else
+        {
+            input[j++] = input[i++];
+        }
+    }
 
     input[j] = '\0';
     len = j;
@@ -87,14 +102,15 @@ int main()
     if (len == 0)
     {
         printf("Rejected\n");
-        return 0;
+        return 0; // Prevent downstream execution on empty text
     }
 
+    // Validate characters
     for (i = 0; i < len; i++)
     {
         if (!strchr("+-*/()i", input[i]))
         {
-            printf("Invalid characters\n");
+            printf("Invalid characters: %c\n", input[i]);
             return 0;
         }
     }
