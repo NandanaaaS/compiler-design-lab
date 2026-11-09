@@ -1,4 +1,5 @@
-//input expression 
+
+// Input expression
 #include <stdio.h>
 #include <ctype.h>
 
@@ -32,7 +33,8 @@ void EP()
 
     if (s[i] == '+' || s[i] == '-')
     {
-        printf("E' -> %c T E'\n", s[i++]);
+        printf("E' -> %c T E'\n", s[i]);
+        printf("Matched operator: %c\n", s[i++]);
         T();
         EP();
     }
@@ -55,7 +57,8 @@ void TP()
 
     if (s[i] == '*' || s[i] == '/')
     {
-        printf("T' -> %c F T'\n", s[i++]);
+        printf("T' -> %c F T'\n", s[i]);
+        printf("Matched operator: %c\n", s[i++]);
         F();
         TP();
     }
@@ -71,12 +74,16 @@ void F()
     if (s[i] == '(')
     {
         printf("F -> ( E )\n");
+        printf("Matched opening bracket\n");
         i++;
         E();
         skip();
 
         if (s[i] == ')')
+        {
+            printf("Matched closing bracket\n");
             i++;
+        }
         else
             error = 1;
     }
@@ -84,8 +91,11 @@ void F()
     {
         printf("F -> id\n");
 
+        int start = i;
         while (isalnum((unsigned char)s[i]))
             i++;
+
+        printf("Recognised operand: %.*s\n", i - start, s + start);
     }
     else
         error = 1;
@@ -97,6 +107,7 @@ int main()
     if (!fgets(s, sizeof(s), stdin))
         return 0;
 
+    printf("\n--- Parsing Process ---\n");
     E();
     skip();
 
@@ -107,7 +118,7 @@ int main()
     }
 
     if (!error && s[i] == '\0')
-        printf("\nParsing successful!\n");
+        printf("\nParsing successful! Expression is valid.\n");
     else
         printf("\nInvalid expression!\n");
 
